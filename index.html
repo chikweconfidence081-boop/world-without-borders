@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="theme-color" content="#1B2A4A">
+<title>World Without Borders — 3D Life Simulator</title>
+<link rel="icon" href="assets/icon-192.png">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="assets/icon-192.png">
+<meta name="mobile-web-app-capable" content="yes">
+<style>
+:root{
+  --ink:#1E2A3A; --muted:#6B7A90; --card:rgba(255,255,255,.93); --line:#E4EAF2;
+  --teal:#20C3B4; --teal2:#14A89B; --orange:#FF9F1C; --pink:#FF6B9A; --purple:#7B61FF; --green:#2ECC71; --red:#FF5A5F; --gold:#FFC93C; --blue:#3A86FF;
+  --shadow:0 10px 30px rgba(18,32,64,.20); --r:20px;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;overflow:hidden;background:#1B2A4A;font-family:"Segoe UI",system-ui,-apple-system,Roboto,"Helvetica Neue",Arial,sans-serif;color:var(--ink);user-select:none;-webkit-user-select:none}
+#gl{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:none;outline:none}
+.hidden{display:none!important}
+button{font:inherit;cursor:pointer;border:0;color:inherit;background:none}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:12px 20px;border-radius:999px;font-weight:800;font-size:15px;letter-spacing:.01em;
+  background:linear-gradient(180deg,#2FD4C4,#14A89B);color:#fff;box-shadow:0 4px 0 #0E7F75,0 8px 18px rgba(20,168,155,.35);transition:transform .08s,filter .15s}
+.btn:hover{filter:brightness(1.07)} .btn:active{transform:translateY(3px);box-shadow:0 1px 0 #0E7F75}
+.btn.orange{background:linear-gradient(180deg,#FFB547,#FF8A00);box-shadow:0 4px 0 #C76A00,0 8px 18px rgba(255,138,0,.35)}
+.btn.purple{background:linear-gradient(180deg,#9A86FF,#6A4DF5);box-shadow:0 4px 0 #4B33C4,0 8px 18px rgba(106,77,245,.35)}
+.btn.ghost{background:#fff;color:var(--ink);box-shadow:0 4px 0 #D3DCE8,0 6px 14px rgba(18,32,64,.12)}
+.btn.red{background:linear-gradient(180deg,#FF7A7E,#F0484E);box-shadow:0 4px 0 #B92F35}
+.btn:disabled{filter:grayscale(1) opacity(.55);cursor:not-allowed}
+.card{background:var(--card);border-radius:var(--r);box-shadow:var(--shadow);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+
+/* ---------- title ---------- */
+#title{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:radial-gradient(ellipse at center,rgba(10,20,45,.15),rgba(10,20,45,.55))}
+#title .box{width:min(460px,92vw);padding:22px 24px 20px;text-align:center}
+#title img{width:100%;border-radius:16px;display:block;margin-bottom:14px;box-shadow:0 6px 18px rgba(0,0,0,.25)}
+#title .sub{font-size:14px;color:var(--muted);margin:2px 0 16px;font-weight:600}
+#title .stack{display:flex;flex-direction:column;gap:12px}
+#title .stack .btn{font-size:17px;padding:14px}
+#title .foot{margin-top:14px;font-size:12px;color:var(--muted)}
+
+/* ---------- creator ---------- */
+#creator{position:fixed;inset:0;pointer-events:none}
+#creator .panel{pointer-events:auto;position:absolute;right:20px;top:20px;bottom:20px;width:min(420px,46vw);padding:18px 20px;overflow:auto;display:flex;flex-direction:column;gap:12px}
+#creator h2{margin:0;font-size:24px} #creator .hint{margin:-6px 0 0;color:var(--muted);font-size:13px;font-weight:600}
+.field label{display:block;font-size:12px;font-weight:800;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;margin-bottom:6px}
+.field input{width:100%;font:inherit;font-size:18px;font-weight:700;padding:10px 14px;border-radius:14px;border:2px solid var(--line);outline:none;color:var(--ink)}
+.field input:focus{border-color:var(--teal)}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{padding:7px 12px;border-radius:999px;background:#EEF3F8;font-weight:700;font-size:13px;border:2px solid transparent}
+.chip.on{background:#E3FAF7;border-color:var(--teal);color:#0B7F74}
+.swatches{display:flex;flex-wrap:wrap;gap:7px}
+.sw{width:30px;height:30px;border-radius:50%;border:3px solid #fff;box-shadow:0 0 0 2px var(--line)}
+.sw.on{box-shadow:0 0 0 3px var(--teal)}
+.perk{font-size:12.5px;color:#0B7F74;font-weight:700;margin-top:6px}
+#creator .actions{display:flex;gap:10px;margin-top:auto;padding-top:6px}
+#creator .actions .btn{flex:1}
+#rotHint{position:absolute;left:20px;bottom:20px;pointer-events:none;color:#fff;font-weight:700;font-size:13px;text-shadow:0 1px 3px rgba(0,0,0,.5)}
+
+/* ---------- HUD ---------- */
+#hud{position:fixed;inset:0;pointer-events:none}
+#hud > *{pointer-events:auto}
+#me{position:absolute;left:14px;top:14px;width:290px;padding:12px 14px}
+#me .row{display:flex;align-items:center;gap:10px}
+#avatar{width:50px;height:50px;border-radius:50%;display:grid;place-items:center;font-size:28px;background:linear-gradient(180deg,#E3FAF7,#C9F2EC);border:3px solid #fff;box-shadow:0 0 0 2px var(--teal)}
+#meName{font-weight:800;font-size:17px;line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:170px}
+#meSub{font-size:12px;font-weight:700;color:var(--muted)}
+.lv{margin-left:auto;background:var(--purple);color:#fff;font-weight:800;font-size:12px;padding:4px 9px;border-radius:999px}
+.bar{height:9px;border-radius:9px;background:#E7EDF5;overflow:hidden}
+.bar > i{display:block;height:100%;border-radius:9px;transition:width .35s}
+#xpBar{margin:9px 0 10px} #xpBar > i{background:linear-gradient(90deg,#9A86FF,#6A4DF5)}
+.needs{display:grid;grid-template-columns:1fr 1fr;gap:7px 12px}
+.need{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:700}
+.need .ic{width:20px;text-align:center;font-size:15px}
+.need .bar{flex:1;height:8px}
+#mood{margin-top:8px;font-size:12px;font-weight:700;color:var(--muted)}
+#tr{position:absolute;right:14px;top:14px;display:flex;flex-direction:column;align-items:flex-end;gap:8px}
+.pills{display:flex;gap:8px}
+.pill{padding:8px 14px;border-radius:999px;font-weight:800;font-size:16px;display:flex;align-items:center;gap:6px}
+#clock{display:flex;align-items:center;gap:8px;padding:6px 6px 6px 14px;border-radius:999px;font-weight:800;font-size:14px}
+.spd{width:32px;height:32px;border-radius:50%;background:#EEF3F8;font-size:13px;font-weight:800}
+.spd.on{background:var(--teal);color:#fff}
+#mini{border-radius:16px;box-shadow:var(--shadow);background:#fff;cursor:pointer;display:block}
+#mission{position:absolute;left:14px;bottom:14px;width:330px;padding:12px 14px}
+#mission .k{font-size:11px;font-weight:800;letter-spacing:.08em;color:var(--orange);text-transform:uppercase}
+#mission .t{font-size:16px;font-weight:800;margin:3px 0 2px}
+#mission .d{font-size:13px;color:var(--muted);font-weight:600;line-height:1.35}
+#mission .foot{display:flex;align-items:center;gap:10px;margin-top:9px}
+#mission .bar{flex:1} #mission .bar > i{background:linear-gradient(90deg,#FFC93C,#FF9F1C)}
+#mission .btn{padding:8px 16px;font-size:14px}
+#hint{position:absolute;left:50%;bottom:16px;transform:translateX(-50%);padding:10px 18px;border-radius:999px;font-weight:700;font-size:14px;white-space:nowrap;max-width:calc(100vw - 760px);overflow:hidden;text-overflow:ellipsis}
+#hint.act{background:var(--teal);color:#fff;cursor:pointer}
+#menu{position:absolute;right:14px;bottom:14px;display:flex;gap:8px}
+.mbtn{width:64px;height:64px;border-radius:18px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:24px;gap:1px}
+.mbtn span{font-size:10.5px;font-weight:800;color:var(--muted)}
+.mbtn:hover{transform:translateY(-2px)}
+
+/* ---------- world labels ---------- */
+#labels{position:fixed;inset:0;pointer-events:none;overflow:hidden}
+.tag{position:absolute;transform:translate(-50%,-100%);background:rgba(255,255,255,.95);padding:5px 11px;border-radius:999px;font-weight:800;font-size:13px;white-space:nowrap;box-shadow:0 4px 12px rgba(0,0,0,.18)}
+.tag.small{font-size:11.5px;padding:3px 9px;background:rgba(30,42,58,.78);color:#fff}
+.tag.target{background:var(--orange);color:#fff}
+.bubble{position:absolute;transform:translate(-50%,-100%);background:#fff;padding:9px 13px;border-radius:16px;font-weight:700;font-size:13px;max-width:240px;white-space:normal;text-align:center;box-shadow:0 6px 16px rgba(0,0,0,.2)}
+.bubble:after{content:"";position:absolute;left:50%;bottom:-7px;margin-left:-8px;border:8px solid transparent;border-bottom:0;border-top-color:#fff}
+.float{position:absolute;transform:translate(-50%,-100%);font-weight:900;font-size:20px;color:#fff;text-shadow:0 2px 0 rgba(0,0,0,.35),0 0 8px rgba(0,0,0,.25);white-space:nowrap}
+
+/* ---------- modal ---------- */
+#modal{position:fixed;inset:0;background:rgba(15,25,45,.45);display:flex;align-items:center;justify-content:center;padding:16px;z-index:20}
+#modal .card{width:min(560px,100%);max-height:calc(100vh - 32px);overflow:auto;padding:0}
+.mhead{padding:18px 22px;border-radius:var(--r) var(--r) 0 0;color:#fff;display:flex;align-items:center;gap:14px}
+.mhead .ic{font-size:40px;width:58px;height:58px;display:grid;place-items:center;background:rgba(255,255,255,.22);border-radius:16px}
+.mhead h3{margin:0;font-size:23px} .mhead p{margin:2px 0 0;font-weight:700;opacity:.92;font-size:13px}
+.mhead .x{margin-left:auto;width:38px;height:38px;border-radius:50%;background:rgba(255,255,255,.25);color:#fff;font-size:18px;font-weight:900}
+.mbody{padding:16px 20px 20px}
+.status{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.status span{background:#EEF3F8;border-radius:999px;padding:5px 11px;font-size:12.5px;font-weight:800}
+.acts{display:grid;gap:10px}
+.act{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:16px;background:#F5F8FC;border:2px solid transparent;text-align:left;width:100%}
+.act:hover:not(:disabled){border-color:var(--teal);background:#EFFCFA}
+.act:disabled{opacity:.5;cursor:not-allowed}
+.act .ai{font-size:28px;width:44px;text-align:center}
+.act .at{font-weight:800;font-size:15.5px} .act .ad{font-size:12.5px;color:var(--muted);font-weight:600;margin-top:2px}
+.act .tags{margin-left:auto;display:flex;flex-direction:column;gap:4px;align-items:flex-end}
+.tg{font-size:11.5px;font-weight:800;padding:3px 8px;border-radius:999px;white-space:nowrap}
+.tg.c{background:#FFF4D6;color:#A86A00} .tg.g{background:#DDF8E8;color:#16804A} .tg.e{background:#E6F0FF;color:#2759B5} .tg.r{background:#FFE3E4;color:#B3262C}
+.tabs{display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap}
+.list{display:grid;gap:8px}
+.li{display:flex;align-items:center;gap:12px;padding:11px 14px;border-radius:14px;background:#F5F8FC;font-weight:700}
+.li .r{margin-left:auto;font-size:13px}
+.li.done{background:#E9FBF1} .li.cur{background:#FFF6E3;border:2px solid var(--gold)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.stat{background:#F5F8FC;border-radius:14px;padding:10px 12px}
+.stat b{display:block;font-size:20px} .stat small{font-size:11px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+.toggle{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border-radius:14px;background:#F5F8FC;font-weight:800}
+.sw2{width:52px;height:30px;border-radius:30px;background:#CBD5E1;position:relative;transition:.2s}
+.sw2:after{content:"";position:absolute;top:3px;left:3px;width:24px;height:24px;border-radius:50%;background:#fff;transition:.2s;box-shadow:0 2px 4px rgba(0,0,0,.2)}
+.sw2.on{background:var(--teal)} .sw2.on:after{left:25px}
+/* arena */
+.track{position:relative;height:46px;border-radius:14px;background:#E7EDF5;margin:18px 0 8px;overflow:hidden}
+.zone{position:absolute;top:0;bottom:0;background:linear-gradient(180deg,#FFD66B,#FFB300);border-radius:10px}
+.marker{position:absolute;top:-4px;bottom:-4px;width:10px;margin-left:-5px;background:var(--ink);border-radius:6px}
+.big{font-size:30px;font-weight:900;text-align:center;margin:8px 0 2px}
+.progress{height:16px;border-radius:16px;background:#E7EDF5;overflow:hidden;margin:18px 0 6px}
+.progress i{display:block;height:100%;width:0;background:linear-gradient(90deg,#2FD4C4,#14A89B);border-radius:16px}
+
+/* ---------- toasts / fade ---------- */
+#toasts{position:fixed;left:50%;top:14px;transform:translateX(-50%);display:flex;flex-direction:column;gap:8px;align-items:center;z-index:30;pointer-events:none;width:min(560px,calc(100vw - 640px))}
+.toast{background:#fff;border-radius:16px;padding:10px 16px;font-weight:700;font-size:14px;box-shadow:var(--shadow);display:flex;gap:10px;align-items:center;animation:pop .25s ease-out;border-left:6px solid var(--teal);pointer-events:none}
+.toast .btn{pointer-events:auto}
+.toast .ti{font-size:22px} .toast.good{border-color:var(--green)} .toast.bad{border-color:var(--red)} .toast.gold{border-color:var(--gold)} .toast.purple{border-color:var(--purple)}
+.toast .btn{padding:6px 12px;font-size:12.5px;margin-left:6px}
+@keyframes pop{from{transform:translateY(-10px) scale(.96);opacity:0}to{transform:none;opacity:1}}
+#fade{position:fixed;inset:0;background:#0B1328;opacity:0;pointer-events:none;transition:opacity .6s;z-index:40;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:22px}
+#fade.on{opacity:1;pointer-events:auto}
+#error{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:#1B2A4A;color:#fff;padding:30px;text-align:center;font-size:18px;z-index:99}
+
+/* ---------- small screens ---------- */
+@media (max-width: 900px){
+  #me{left:10px;right:10px;top:10px;width:auto;padding:9px 12px} #avatar{width:38px;height:38px;font-size:21px} #meName{font-size:15px;max-width:none}
+  #xpBar{margin:7px 0 8px}
+  .needs{grid-template-columns:repeat(4,1fr);gap:6px 10px} .need{font-size:0} .need .ic{font-size:14px} #mood{display:none}
+  #tr{top:122px;left:10px;right:10px;flex-direction:row;justify-content:space-between;align-items:center}
+  #mission{width:auto;left:10px;right:10px;bottom:84px;padding:10px 12px} #mission .d{display:none} #mission .t{font-size:15px}
+  #menu{left:10px;right:10px;bottom:10px;justify-content:space-between;gap:6px}
+  .mbtn{width:auto;flex:1;height:62px}
+  #hint{bottom:184px;max-width:calc(100vw - 20px);font-size:13px}
+  #mini{display:none} .pill{font-size:14px;padding:7px 11px} #clock{font-size:12px;padding:4px 4px 4px 10px;gap:4px} .spd{width:28px;height:28px} .spd[data-s="3"]{display:none}
+  #toasts{width:calc(100vw - 20px);top:auto;bottom:236px}
+  #creator .panel{left:12px;right:12px;width:auto;top:auto;bottom:12px;max-height:56vh}
+  #rotHint{top:16px;bottom:auto}
+}
+@media (max-width: 430px){ .pill.gem{display:none} }
+</style>
+</head>
+<body>
+<canvas id="gl" tabindex="0"></canvas>
+<div id="labels"></div>
+
+<div id="title" class="hidden">
+  <div class="box card">
+    <img src="assets/logo.jpg" alt="World Without Borders">
+    <div class="sub">A friendly 3D life simulator • build your dream life in New Horizon</div>
+    <div class="stack">
+      <button class="btn" id="btnContinue">▶ Continue my life</button>
+      <button class="btn orange" id="btnNew">✨ Start a new life</button>
+      <button class="btn ghost" id="btnHow">❔ How to play</button>
+      <button class="btn ghost" id="btnTitleSettings">⚙️ Settings</button>
+    </div>
+    <div class="foot" id="titleFoot"></div>
+  </div>
+</div>
+
+<div id="creator" class="hidden">
+  <div id="rotHint">↔ Drag to turn your character</div>
+  <div class="panel card">
+    <h2>Create your character</h2>
+    <p class="hint">Pick a look and a lifestyle. You can change it any time.</p>
+    <div class="field"><label>Name</label><input id="cName" maxlength="18" autocomplete="off" spellcheck="false"></div>
+    <div class="field"><label>Lifestyle</label><div class="chips" id="cArch"></div><div class="perk" id="cPerk"></div></div>
+    <div class="field"><label>Skin tone</label><div class="swatches" id="cSkin"></div></div>
+    <div class="field"><label>Hairstyle</label><div class="chips" id="cHairStyle"></div></div>
+    <div class="field"><label>Hair colour</label><div class="swatches" id="cHair"></div></div>
+    <div class="field"><label>Outfit</label><div class="chips" id="cOutfit"></div></div>
+    <div class="field"><label>Top colour</label><div class="swatches" id="cTop"></div></div>
+    <div class="field"><label>Bottom colour</label><div class="swatches" id="cBottom"></div></div>
+    <div class="field"><label>Shoes</label><div class="swatches" id="cShoes"></div></div>
+    <div class="actions"><button class="btn ghost" id="cRandom">🎲 Surprise me</button><button class="btn orange" id="cDone">Start my life →</button></div>
+  </div>
+</div>
+
+<div id="hud" class="hidden">
+  <div id="me" class="card">
+    <div class="row">
+      <div id="avatar">🙂</div>
+      <div><div id="meName">Player</div><div id="meSub">Explorer</div></div>
+      <div class="lv" id="meLv">Lv 1</div>
+    </div>
+    <div class="bar" id="xpBar" title="Experience"><i></i></div>
+    <div class="needs">
+      <div class="need" title="Energy"><span class="ic">⚡</span>Energy<div class="bar" id="nEnergy"><i></i></div></div>
+      <div class="need" title="Food"><span class="ic">🍔</span>Food<div class="bar" id="nHunger"><i></i></div></div>
+      <div class="need" title="Fun"><span class="ic">🎉</span>Fun<div class="bar" id="nFun"><i></i></div></div>
+      <div class="need" title="Social"><span class="ic">💬</span>Social<div class="bar" id="nSocial"><i></i></div></div>
+    </div>
+    <div id="mood"></div>
+  </div>
+  <div id="tr">
+    <div class="pills">
+      <div class="pill card" title="Coins">🪙 <span id="coins">0</span></div>
+      <div class="pill card gem" title="Gems">💎 <span id="gems">0</span></div>
+    </div>
+    <div id="clock" class="card"><span id="clockTxt">Day 1 • 08:00</span>
+      <button class="spd" data-s="0" title="Pause time">⏸</button><button class="spd" data-s="1" title="Normal speed">▶</button>
+      <button class="spd" data-s="2" title="Fast">⏩</button><button class="spd" data-s="3" title="Super fast">⏭</button></div>
+    <canvas id="mini" width="220" height="162" title="Click the map to walk there"></canvas>
+  </div>
+  <div id="mission" class="card">
+    <div class="k" id="mK">Goal 1 of 10</div>
+    <div class="t" id="mT"></div>
+    <div class="d" id="mD"></div>
+    <div class="foot"><div class="bar" id="mBar"><i></i></div><span id="mP" style="font-weight:800;font-size:13px"></span><button class="btn orange" id="mGo">Go ➜</button></div>
+  </div>
+  <div id="hint" class="card"></div>
+  <div id="menu">
+    <button class="mbtn card" data-p="me">👤<span>Me</span></button>
+    <button class="mbtn card" data-p="goals">🎯<span>Goals</span></button>
+    <button class="mbtn card" data-p="empire">🏢<span>Empire</span></button>
+    <button class="mbtn card" data-p="map">🗺️<span>Map</span></button>
+    <button class="mbtn card" data-p="settings">⚙️<span>Settings</span></button>
+  </div>
+</div>
+
+<div id="modal" class="hidden"><div class="card" id="modalCard"></div></div>
+<div id="toasts"></div>
+<div id="fade"></div>
+
+<script src="js/engine.js"></script>
+<script src="js/world.js"></script>
+<script src="js/characters.js"></script>
+<script src="js/game.js"></script>
+</body>
+</html>
