@@ -1,0 +1,15 @@
+{
+  "name": "world-without-borders-3d",
+  "version": "1.0.1",
+  "private": true,
+  "description": "World Without Borders 3D - Android app shell (Capacitor) around the web game in /game",
+  "dependencies": {
+    "@capacitor/android": "^7.0.0",
+    "@capacitor/app": "^7.0.0",
+    "@capacitor/core": "^7.0.0"
+  },
+  "devDependencies": {
+    "@capacitor/assets": "^3.0.5",
+    "@capacitor/cli": "^7.0.0"
+  }
+}

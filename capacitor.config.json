@@ -1,0 +1,6 @@
+{
+  "appId": "com.worldwithoutborders.game3d",
+  "appName": "World Without Borders",
+  "webDir": "game",
+  "android": { "backgroundColor": "#1B2A4A" }
+}

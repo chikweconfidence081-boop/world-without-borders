@@ -1,0 +1,29 @@
+ANDROID SIGNING SETUP (one-time)
+
+The Android build workflow expects these GitHub Actions repository secrets:
+- ANDROID_KEYSTORE_BASE64
+- ANDROID_KEY_ALIAS
+- ANDROID_KEY_PASSWORD
+- ANDROID_STORE_PASSWORD
+
+Create a NEW release keystore on your own computer; do not reuse the keystore
+from the original ZIP because its password was embedded in the original workflow.
+
+In Windows Command Prompt (with Java JDK/keytool installed):
+  keytool -genkeypair -v -keystore wwb-release.keystore -alias wwb3d -keyalg RSA -keysize 2048 -validity 10000
+
+Choose and securely store the passwords. Keep the resulting .keystore file safe
+and backed up. Losing it can prevent publishing updates signed as the same app.
+
+To create the Base64 value in PowerShell:
+  [Convert]::ToBase64String([IO.File]::ReadAllBytes("wwb-release.keystore")) | Set-Clipboard
+
+Add the four values in GitHub:
+Repository > Settings > Secrets and variables > Actions > New repository secret.
+
+For ANDROID_KEY_ALIAS use: wwb3d
+ANDROID_KEY_PASSWORD is the key password you chose.
+ANDROID_STORE_PASSWORD is the keystore password you chose.
+ANDROID_KEYSTORE_BASE64 is the copied Base64 output.
+
+Never commit the keystore, passwords, or Base64 value to the repository.
